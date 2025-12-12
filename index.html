@@ -1,118 +1,118 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Control LED DualSense - Prueba</title>
     <style>
-        body {
-            font-family: sans-serif;
-            padding: 20px;
-            background-color: #2e2e2e;
-            color: #f0f0f0;
-        }
-        .color-control {
-            margin-bottom: 15px;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        input[type="range"] {
-            width: 100%;
-            height: 25px;
-        }
-        #color-preview {
-            width: 100%;
-            height: 50px;
-            border: 2px solid #555;
-            margin-top: 20px;
-            border-radius: 5px;
-            transition: background-color 0.3s;
-        }
-        #send-button {
-            padding: 10px 20px;
-            font-size: 16px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-top: 20px;
-            width: 100%;
-        }
-        #send-button:hover {
-            background-color: #0056b3;
-        }
+      body {
+        font-family: sans-serif;
+        padding: 20px;
+        background-color: #2e2e2e;
+        color: #f0f0f0;
+      }
+      .color-control {
+        margin-bottom: 15px;
+      }
+      label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+      }
+      input[type="range"] {
+        width: 100%;
+        height: 25px;
+      }
+      #color-preview {
+        width: 100%;
+        height: 50px;
+        border: 2px solid #555;
+        margin-top: 20px;
+        border-radius: 5px;
+        transition: background-color 0.3s;
+      }
+      #send-button {
+        padding: 10px 20px;
+        font-size: 16px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-top: 20px;
+        width: 100%;
+      }
+      #send-button:hover {
+        background-color: #0056b3;
+      }
     </style>
-</head>
-<body>
-
+  </head>
+  <body>
     <h1>🎮 Control de Color LED DualSense</h1>
-    <p>Mueve los deslizadores y haz clic en "Aplicar Color" para enviar los valores RGB al DualSense.</p>
+    <p>
+      Mueve los deslizadores y haz clic en "Aplicar Color" para enviar los
+      valores RGB al DualSense.
+    </p>
 
     <div class="color-control">
-        <label for="red">Rojo (<span id="red-value">0</span>)</label>
-        <input type="range" id="red" min="0" max="255" value="0">
+      <label for="red">Rojo (<span id="red-value">0</span>)</label>
+      <input type="range" id="red" min="0" max="255" value="0" />
     </div>
 
     <div class="color-control">
-        <label for="green">Verde (<span id="green-value">0</span>)</label>
-        <input type="range" id="green" min="0" max="255" value="0">
+      <label for="green">Verde (<span id="green-value">0</span>)</label>
+      <input type="range" id="green" min="0" max="255" value="0" />
     </div>
 
     <div class="color-control">
-        <label for="blue">Azul (<span id="blue-value">0</span>)</label>
-        <input type="range" id="blue" min="0" max="255" value="0">
+      <label for="blue">Azul (<span id="blue-value">0</span>)</label>
+      <input type="range" id="blue" min="0" max="255" value="0" />
     </div>
-    
+
     <div id="color-preview"></div>
 
     <button id="send-button">Aplicar Color al DualSense</button>
 
     <script>
+      const redSlider = document.getElementById("red");
+      const greenSlider = document.getElementById("green");
+      const blueSlider = document.getElementById("blue");
+      const preview = document.getElementById("color-preview");
+      const button = document.getElementById("send-button");
 
-        const redSlider = document.getElementById('red');
-        const greenSlider = document.getElementById('green');
-        const blueSlider = document.getElementById('blue');
-        const preview = document.getElementById('color-preview');
-        const button = document.getElementById('send-button');
+      function updateColor() {
+        const r = redSlider.value;
+        const g = greenSlider.value;
+        const b = blueSlider.value;
 
-        function updateColor() {
-            const r = redSlider.value;
-            const g = greenSlider.value;
-            const b = blueSlider.value;
-            
-            document.getElementById('red-value').textContent = r;
-            document.getElementById('green-value').textContent = g;
-            document.getElementById('blue-value').textContent = b;
+        document.getElementById("red-value").textContent = r;
+        document.getElementById("green-value").textContent = g;
+        document.getElementById("blue-value").textContent = b;
 
-            preview.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
+        preview.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
+      }
+
+      async function setColor() {
+        const r = parseInt(redSlider.value);
+        const g = parseInt(greenSlider.value);
+        const b = parseInt(blueSlider.value);
+
+        try {
+          if (window.electronAPI && window.electronAPI.setColor) {
+            await window.electronAPI.setColor(r, g, b, true);
+            console.log(`Enviando color: R:${r}, G:${g}, B:${b}`);
+          }
+        } catch (error) {
+          console.error("Error al enviar el color:", error);
         }
+      }
 
-        async function setColor() {
+      redSlider.addEventListener("input", updateColor);
+      greenSlider.addEventListener("input", updateColor);
+      blueSlider.addEventListener("input", updateColor);
+      button.addEventListener("click", setColor);
 
-            const r = parseInt(redSlider.value);
-            const g = parseInt(greenSlider.value);
-            const b = parseInt(blueSlider.value);
-
-           try {
-            if (window.electronAPI && window.electronAPI.setColor) {
-                await window.electronAPI.setColor(r, g, b, true);
-                console.log(`Enviando color: R:${r}, G:${g}, B:${b}`);
-            }
-           } catch (error) {
-            console.error("Error al enviar el color:", error);
-           }
-        }
-
-        redSlider.addEventListener('input', updateColor);
-        greenSlider.addEventListener('input', updateColor);
-        blueSlider.addEventListener('input', updateColor);
-        button.addEventListener('click', setColor);
-        
-        updateColor();
+      updateColor();
     </script>
-</body>
+  </body>
 </html>
