@@ -78,9 +78,9 @@ class DualSense {
       );
     }
 
-    //this.controller.on("data", (data) => {
-    //  this.processInput(data);
-    //});
+    this.controller.on("data", (data) => {
+      this.processInput(data);
+    });
 
     this.controller.on("error", (err) => {
       console.log("[DS] Error en controlador (posible desconexión):", err);
