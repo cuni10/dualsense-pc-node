@@ -54,7 +54,7 @@ class DualSense {
         d.vendorId === 1356 && (d.productId === 3302 || d.productId === 3570)
     );
 
-    console.log(`Dispositivos HID encontrados:`, devices);
+    console.log(`Dispositivos HID encontrados:`, allDevices);
 
     device =
       devices.find((d) => d.productId === 3302) ||
@@ -77,7 +77,17 @@ class DualSense {
         this.controller.getDeviceInfo()
       );
     }
+
+    //this.controller.on("data", (data) => {
+    //  this.processInput(data);
+    //});
+
+    this.controller.on("error", (err) => {
+      console.log("[DS] Error en controlador (posible desconexión):", err);
+    });
   }
+
+  // ========== Output reports ==========
 
   sendData(data) {
     if (this.data) {
@@ -133,6 +143,7 @@ class DualSense {
         [1, 0x02],
         [2, 0xff],
         [3, 0x57],
+        [40, 0x02],
         [43, 0x01],
         [44, 0x00],
         [46, r],
@@ -154,6 +165,48 @@ class DualSense {
       ],
       sendData
     );
+  }
+
+  // ============== INPUT REPORTS ==============
+  processInput(data) {
+    const reportId = data[0];
+
+    let stickLeftX, stickLeftY, btnCross, batteryLevel, isCharging, reportSize;
+
+    if (reportId === 0x01) {
+      reportSize = data.length;
+      stickLeftX = data[1];
+      stickLeftY = data[2];
+
+      const buttons = data[8];
+      btnCross = (buttons & 0x20) !== 0;
+
+      const batteryByte = data[53];
+      batteryLevel = Math.min((batteryByte & 0x0f) * 10 + 5, 100);
+    } else if (reportId === 0x31) {
+      reportSize = data.length;
+      stickLeftX = data[2];
+      stickLeftY = data[3];
+
+      const buttons = data[9];
+      btnCross = (buttons & 0x20) !== 0;
+
+      const batteryByte = data[54];
+      batteryLevel = Math.min((batteryByte & 0x0f) * 10 + 5, 100);
+      isCharging = (batteryByte & 0xf0) >> 4 !== 0;
+    } else {
+      return;
+    }
+
+    if (this.isBluetooth && reportId === 0x31) {
+      console.log(
+        `[BT INPUT] ID: ${reportId.toString(
+          16
+        )} | Tamaño: ${reportSize} B | LStick X/Y: ${stickLeftX}/${stickLeftY} | X-Button: ${
+          btnCross ? "PRESS" : "---"
+        } | Batería: ${batteryLevel}%`
+      );
+    }
   }
 }
 
