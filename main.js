@@ -42,6 +42,7 @@ app.on("activate", () => {
 
 const CRC32 = require("crc-32");
 const HID = require("node-hid");
+const { buffer } = require("stream/consumers");
 
 class DualSense {
   constructor(device) {
@@ -51,7 +52,7 @@ class DualSense {
 
     const devices = allDevices.filter(
       (d) =>
-        d.vendorId === 1356 && (d.productId === 3302 || d.productId === 3570)
+        d.vendorId === 1356 && (d.productId === 3302 || d.productId === 3570),
     );
 
     console.log(`Dispositivos HID encontrados:`, allDevices);
@@ -65,7 +66,6 @@ class DualSense {
     }
 
     this.controller = new HID.HID(device.path);
-
     this.deviceConnection = device.interface;
     this.isBluetooth = this.deviceConnection === -1 ? true : false;
 
@@ -74,7 +74,7 @@ class DualSense {
         `Controlador DualSense conectado por ${
           this.deviceConnection === -1 ? "Bluetooth" : "USB"
         }\n`,
-        this.controller.getDeviceInfo()
+        this.controller.getDeviceInfo(),
       );
     }
 
@@ -100,27 +100,24 @@ class DualSense {
   report(data, sendData) {
     const length = this.isBluetooth ? 78 : 64;
 
-    const paquete = new Array(length).fill(0);
-    for (const i in data) {
-      const [index, value] = data[i];
+    const paquete = Buffer.alloc(length, 0);
+    for (const [index, value] of data) {
       paquete[index] = value;
     }
 
     if (this.isBluetooth) {
+      const headerBT = Buffer.from([0xa2]);
       const dataForCrc = paquete.slice(0, 74);
+      const crcBuffer = Buffer.concat([headerBT, dataForCrc]);
 
-      const crcChecksum = CRC32.buf(Buffer.from(dataForCrc));
-
+      const crcChecksum = CRC32.buf(crcBuffer);
       const unsignedCrc = crcChecksum >>> 0;
 
-      paquete[74] = unsignedCrc & 0x000000ff;
-      paquete[75] = (unsignedCrc & 0x0000ff00) >> 8;
-      paquete[76] = (unsignedCrc & 0x00ff0000) >> 16;
-      paquete[77] = (unsignedCrc & 0xff000000) >> 24;
+      paquete.writeUInt32LE(unsignedCrc, 74);
     }
 
     if (sendData) {
-      this.sendData(paquete);
+      this.controller.write(Array.from(paquete));
     }
 
     return paquete;
@@ -141,16 +138,16 @@ class DualSense {
       [
         [0, 0x31],
         [1, 0x02],
-        [2, 0xff],
-        [3, 0x57],
+        [2, 0x01],
+        [3, 0x55],
         [40, 0x02],
         [43, 0x01],
         [44, 0x00],
-        [46, r],
-        [47, g],
-        [48, b],
+        [45, r],
+        [46, g],
+        [47, b],
       ],
-      sendData
+      sendData,
     );
   }
 
@@ -163,7 +160,7 @@ class DualSense {
         [46, g],
         [47, b],
       ],
-      sendData
+      sendData,
     );
   }
 
@@ -201,10 +198,10 @@ class DualSense {
     if (this.isBluetooth && reportId === 0x31) {
       console.log(
         `[BT INPUT] ID: ${reportId.toString(
-          16
+          16,
         )} | Tamaño: ${reportSize} B | LStick X/Y: ${stickLeftX}/${stickLeftY} | X-Button: ${
           btnCross ? "PRESS" : "---"
-        } | Batería: ${batteryLevel}%`
+        } | Batería: ${batteryLevel}%`,
       );
     }
   }
