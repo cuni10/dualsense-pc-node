@@ -42,7 +42,6 @@ app.on("activate", () => {
 
 const CRC32 = require("crc-32");
 const HID = require("node-hid");
-const { buffer } = require("stream/consumers");
 
 class DualSense {
   constructor(device) {
@@ -78,9 +77,9 @@ class DualSense {
       );
     }
 
-    this.controller.on("data", (data) => {
-      this.processInput(data);
-    });
+    //this.controller.on("data", (data) => {
+    //  this.processInput(data);
+    //});
 
     this.controller.on("error", (err) => {
       console.log("[DS] Error en controlador (posible desconexión):", err);
@@ -116,6 +115,17 @@ class DualSense {
       paquete.writeUInt32LE(unsignedCrc, 74);
     }
 
+    console.log("--- Mapa de Bytes Enviados ---");
+    let output = "";
+    paquete.forEach((byte, i) => {
+      const indexStr = i.toString().padStart(2, "0");
+      const hexValue = byte.toString(16).padStart(2, "0");
+      output += `[${indexStr}:${hexValue}] `;
+
+      if ((i + 1) % 17 === 0) output += "\n";
+    });
+    console.log(output);
+
     if (sendData) {
       this.controller.write(Array.from(paquete));
     }
@@ -136,16 +146,13 @@ class DualSense {
   reportBT(r, g, b, sendData = true) {
     return this.report(
       [
-        [0, 0x31],
-        [1, 0x02],
-        [2, 0x01],
-        [3, 0x55],
-        [40, 0x02],
-        [43, 0x01],
-        [44, 0x00],
-        [45, r],
-        [46, g],
-        [47, b],
+        [0, 0x31], // Report ID (Bluetooth)
+        [2, 0x10],
+        [4, 0xf7],
+
+        [47, r], // Rojo (Slot 47)
+        [48, g], // Verde (Slot 48)
+        [49, b], // Azul (Slot 49)
       ],
       sendData,
     );
