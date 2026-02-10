@@ -4,18 +4,18 @@ Proyecto para controlar el dualsense de ps5 en pc mediante node.js.
 
 ## Funciones
 
-* Cambiar color del touchpad led mediante un selector rgb.
-* Conexion USB.
-* Conexion bluetooth proximamente.
+- HID conecction with USB and Bluetooth.
+- Selector de RGB for Lightbar.
 
 ## Dependecias
 
-* node-hid
-* electron
+- node-hid
+- electron
 
 ## Creditos
 
 Basado en otros proyectos.
 
-* [pydualsense](https://github.com/flok/pydualsense)
-* [node-dualsense](https://github.com/CamTosh/node-dualsense)
+- [pydualsense](https://github.com/flok/pydualsense)
+- [node-dualsense](https://github.com/CamTosh/node-dualsense)
+- [dualsense-explorer](https://github.com/nondebug/dualsense)
